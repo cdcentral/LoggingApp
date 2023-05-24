@@ -5,6 +5,8 @@
 
 package com.ancocentral.loggingapp;
 
+import static com.ancocentral.loggingapp.LogHelper.MAIN_LOGGER;
+
 /**
  *
  * @author chris
@@ -12,6 +14,16 @@ package com.ancocentral.loggingapp;
 public class LoggingApp {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        MAIN_LOGGER.info("Application started.");
+        LogThread logOne = new LogThread("A");
+        Thread thread = new Thread(logOne);
+        thread.setName("1st");
+        //thread.setPriority(Thread.MIN_PRIORITY);
+        thread.start();
+        LogThread logTwo = new LogThread("B");
+        thread = new Thread(logTwo);
+        thread.setName("2nd");
+        //thread.setPriority(Thread.MAX_PRIORITY);
+        thread.start();
     }
 }

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info"> <!-- debug will show status when logs are deleted -->
+    <Properties>
+        <Property name="logDirectory">logs</Property>
+        <Property name="logFileName">App.log</Property>
+        <Property name="ArchiveLogName">%d{yyyyMMdd-HH}-App-%i.log</Property>
+
+        <Property name="pattern">%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n</Property>
+
+        <!-- CSV Log properties -->
+        <Property name="csvLogFileName">csvLog</Property>
+        <Property name="csvHeaderRow">index,date,instance</Property>
+
+    </Properties>
+    <Appenders>
+        <RollingFile name="csvFile" 
+                     fileName="${csvLogFileName}.tmp"
+                     filePattern="${csvLogFileName}-%d{MM-dd-yyyy}-%i.csv" >
+            <CsvParameterLayout delimiter="," header="${csvHeaderRow}\n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="200" />
+        </RollingFile>
+
+        <!-- This Syslog Appender allows this app to write to the syslog on the machine this LiveNoiseDaemon instance 
+        is running on. More info: https://logging.apache.org/log4j/2.x/manual/appenders.html#SyslogAppender -->
+        <!--
+        <Syslog name="ApplicationSysLog" host="127.0.0.1" port="514" protocol="UDP"></Syslog>
+        -->
+        <!-- Main Application rolling log -->
+        <RollingFile name="MainRollingLog" fileName="${logDirectory}/${logFileName}" filePattern="${logDirectory}/${ArchiveLogName}">
+            <PatternLayout pattern="${pattern}" />
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <!-- Deletes log files older than 40 days -->
+            <DefaultRolloverStrategy max="5">
+                <Delete basePath="${logDirectory}" maxDepth="1">
+                    <IfFileName glob="*App*.log" />
+                    <IfLastModified age="40d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- https://logging.apache.org/log4j/2.x/faq.html#separate_log_files 
+        This Routing Appender helps dynamically write logs to a specific file.
+        For example the previous version of VR that used BlackBox for logging had
+        a parameter that defined which file an airports log should go to.  Thats how
+        we had a BOS.nfo, DEN.nfo, IAD.nfo, etc log files.
+
+        Now for Log4j2 we have the Routing Appender to do the same.
+        The important thing to note is the text below 'DYN_ACCT'.
+
+        In the code the way to dynamically route BOS or DEN logs to the write file is to use
+        ThreadContext object (https://logging.apache.org/log4j/2.x/log4j-api/apidocs/org/apache/logging/log4j/ThreadContext.html)
+
+        The way to use it is ThreadContext.put("DYN_ACCT", <String representing airport>); then invoking the
+        correct Logger. 
+        Subsequently if you want to log to another airport, then you would do first ThreadContext.clearAll();
+        or ThreadContext.remove("DYN_ACCT");  Then invoke 
+        ThreadContext.put("DYN_ACCT, <string representing the other airport>);
+        -->
+        <Routing name="Routing">
+          <Routes pattern="$${ctx:DYNAMIC_LOG}">
+            <Route>
+              <RollingFile name="routing_log" append="true" fileName="${logDirectory}/${ctx:DYNAMIC_LOG}_log.log"
+                 filePattern="${logDirectory}/archive/${ctx:DYNAMIC_LOG}_Downlink-%d{MM-dd-yyyy}-%i.log">
+                <PatternLayout>
+                  <pattern>%d{ISO8601} [%t] %p %c %L - %m%n</pattern>
+                </PatternLayout>
+                <Policies>
+                  <OnStartupTriggeringPolicy />
+                  <TimeBasedTriggeringPolicy/>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+                </Policies>
+                <!-- Deletes log files, with format *.log, older than 2 days -->
+                <DefaultRolloverStrategy max="5">
+                    <Delete basePath="${logDirectory}/" maxDepth="1">
+                        <IfFileName glob="*_log.log" />
+                        <IfLastModified age="2d" />
+                    </Delete>
+                </DefaultRolloverStrategy>
+              </RollingFile>
+            </Route>
+          </Routes>
+        </Routing>
+
+        <!-- Console appenders for development only! -->
+        <Console name="Console-Out" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
+            <Filters>
+                <!--
+                <ThresholdFilter level="error" onMatch="deny" onMismatch="neutral" />
+                -->
+            </Filters>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Logger name="CSVLogger" level="debug" additivity="false">
+            <AppenderRef ref="csvFile" level="debug"/>
+        </Logger>
+        <!-- These Logger name's are referenced in the code.  If an app wants to reference
+         the 'ConsoleLogger' or 'CommandCenterLogger' they can and it will write
+         to those loggers.
+         Each one of these loggers, except the 'ConsoleLogger', will write to
+         the ApplicationSysLog which is the syslog on the machine that this
+         app runs on.  This is intentional, as we want all logs to be captured in the syslog.
+
+         This could change in the future but for now thats how we want it.
+        -->
+        <Logger name="ConsoleLogger" level="info" additivity="false">
+                <appender-ref ref="Console-Out" level="info" />
+        </Logger>
+        <Logger name="MainLogger" level="info" additivity="false">
+            <appender-ref ref="MainRollingLog" level="info" />
+            <!--
+            <appender-ref ref="ApplicationSysLog" level="all" />
+            -->
+            <appender-ref ref="Console-Out" level="info" />
+        </Logger>
+
+
+        <Logger name="RoutingLogger" level="info" additivity="false">
+          <appender-ref ref="Routing" level="DEBUG" />
+            <!--
+            <appender-ref ref="ApplicationSysLog" level="all" />
+            -->
+        </Logger>
+    </Loggers>
+</Configuration>

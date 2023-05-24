@@ -1,1 +1,6 @@
+# ignoring target build folder
 target
+# ignoring log4j2 logs
+logs
+# ignoring log4j2 csv log
+*.tmp
