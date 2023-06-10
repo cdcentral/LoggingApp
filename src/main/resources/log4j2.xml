@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info"> <!-- debug will show status when logs are deleted -->
+    <Properties>
+        <Property name="logDirectory">logs</Property>
+        <Property name="logFileName">App.log</Property>
+        <Property name="ArchiveLogName">%d{yyyyMMdd-HH}-App-%i.log</Property>
+
+        <Property name="pattern">%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n</Property>
+
+    </Properties>
+    <Appenders>
+
+
+        <!-- Main Application rolling log -->
+        <RollingFile name="MainRollingLog" fileName="${logDirectory}/${logFileName}" filePattern="${logDirectory}/${ArchiveLogName}">
+            <PatternLayout pattern="${pattern}" />
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <!-- Deletes log files older than 40 days -->
+            <DefaultRolloverStrategy max="5">
+                <Delete basePath="${logDirectory}" maxDepth="1">
+                    <IfFileName glob="*App*.log" />
+                    <IfLastModified age="40d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- Console appenders for development only! -->
+        <Console name="Console-Out" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
+            <Filters>
+                <ThresholdFilter level="error" onMatch="deny" onMismatch="neutral" />
+            </Filters>
+        </Console>
+        <Console name="Console-Err" target="SYSTEM_ERR">
+            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
+        </Console>
+        <Console name="Console-Dbg" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
+            <Filters>
+                <ThresholdFilter level="info" onMatch="deny" onMismatch="neutral" />
+            </Filters>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="debug">
+            <appender-ref ref="Console-Out" level="info" />
+            <appender-ref ref="MainRollingLog" level="info" />
+        </Root>
+
+    </Loggers>
+</Configuration>
