@@ -4,6 +4,7 @@
  */
 package com.ancocentral.loggingapp;
 
+import static com.ancocentral.loggingapp.LogHelper.CONSOLE_LOGGER;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  * @author chris
  */
 public class Monitor implements Runnable {
-    private static final Logger LOGGER = LogManager.getLogger(Monitor.class.getSimpleName());
+    //private static final Logger LOGGER = LogManager.getLogger(Monitor.class.getSimpleName());
 
     @Override
     public void run() {
@@ -20,15 +21,15 @@ public class Monitor implements Runnable {
         try {
             Thread.sleep(10000);
         } catch (InterruptedException ex) {
-            LOGGER.fatal(ex);
+            CONSOLE_LOGGER.fatal(ex);
         }
         endMonitoring();
     }
 
     private void startMonitoring() {
-        LOGGER.info("Starting to monitor.");
+        CONSOLE_LOGGER.info("Starting to monitor.");
     }
     private void endMonitoring() {
-        LOGGER.warn("Ending monitor.");
+        CONSOLE_LOGGER.warn("Ending monitor.");
     }
 }
