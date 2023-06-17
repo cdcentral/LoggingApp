@@ -27,28 +27,47 @@
             </DefaultRolloverStrategy>
         </RollingFile>
 
+        <Routing name="Routing">
+          <Routes pattern="$${ctx:DYNAMIC_LOG}">
+            <Route>
+              <RollingFile name="routing_log" append="true" fileName="${logDirectory}/${ctx:DYNAMIC_LOG}_log.log"
+                 filePattern="${logDirectory}/archive/${ctx:DYNAMIC_LOG}_Downlink-%d{MM-dd-yyyy}-%i.log">
+                <PatternLayout>
+                  <pattern>%d{ISO8601} [%t] %p %c %L - %m%n</pattern>
+                </PatternLayout>
+                <Policies>
+                  <OnStartupTriggeringPolicy />
+                  <TimeBasedTriggeringPolicy/>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+                </Policies>
+                <!-- Deletes log files, with format *.log, older than 2 days -->
+                <DefaultRolloverStrategy>
+                    <Delete basePath="${logDirectory}/" maxDepth="1">
+                        <IfFileName glob="*_log.log" />
+                        <IfLastModified age="2d" />
+                    </Delete>
+                </DefaultRolloverStrategy>
+              </RollingFile>
+            </Route>
+          </Routes>
+        </Routing>
+
         <!-- Console appenders for development only! -->
         <Console name="Console-Out" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
-            <Filters>
-                <ThresholdFilter level="error" onMatch="deny" onMismatch="neutral" />
-            </Filters>
-        </Console>
-        <Console name="Console-Err" target="SYSTEM_ERR">
-            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
-        </Console>
-        <Console name="Console-Dbg" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n" />
-            <Filters>
-                <ThresholdFilter level="info" onMatch="deny" onMismatch="neutral" />
-            </Filters>
         </Console>
     </Appenders>
     <Loggers>
-        <Root level="debug">
-            <appender-ref ref="Console-Out" level="info" />
+        <Logger name="ConsoleLogger" level="info" additivity="false">
+                <appender-ref ref="Console-Out" level="info" />
+        </Logger>
+        <Logger name="MainLogger" level="info" additivity="false">
             <appender-ref ref="MainRollingLog" level="info" />
-        </Root>
+            <appender-ref ref="Console-Out" level="info" />
+        </Logger>
 
+        <Logger name="RoutingLogger" level="info" additivity="false">
+          <appender-ref ref="Routing" level="DEBUG" />
+        </Logger>
     </Loggers>
 </Configuration>
