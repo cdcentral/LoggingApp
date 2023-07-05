@@ -31,4 +31,8 @@ public class LogHelper {
      * Specifically the log file is App.log.  See the log4j2.xml where that is defined.
      */
     public static final Logger MAIN_LOGGER = LogManager.getLogger("MainLogger");
+    /**
+     * Logger to be used to write data to a csv file.
+     */
+    public static final Logger CSV_LOGGER = LogManager.getLogger("CSVLogger");
 }

@@ -5,8 +5,8 @@
 package com.ancocentral.loggingapp;
 
 import static com.ancocentral.loggingapp.LogHelper.CONSOLE_LOGGER;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static com.ancocentral.loggingapp.LogHelper.CSV_LOGGER;
+import java.util.Date;
 
 /**
  *
@@ -19,7 +19,11 @@ public class Monitor implements Runnable {
     public void run() {
         startMonitoring();
         try {
-            Thread.sleep(10000);
+            for(int i = 0; i < 100; i++) {
+                //      csv header rows:  index, date, instance
+                CSV_LOGGER.info("ignored", i, new Date(), "Monitor");
+                Thread.sleep(100);
+            }
         } catch (InterruptedException ex) {
             CONSOLE_LOGGER.fatal(ex);
         }

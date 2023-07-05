@@ -7,9 +7,22 @@
 
         <Property name="pattern">%d{YYYY-MM-dd HH:mm:ss.SSS} [%-5level] %t - %c: %msg%n</Property>
 
+        <!-- CSV Log properties -->
+        <Property name="csvLogFileName">csvLog</Property>
+        <Property name="csvHeaderRow">index,date,instance</Property>
     </Properties>
     <Appenders>
 
+        <RollingFile name="csvFile" 
+                     fileName="${logDirectory}/${csvLogFileName}.csv"
+                     filePattern="${logDirectory}/${csvLogFileName}-%d{MM-dd-yyyy}-%i.csv" >
+            <CsvParameterLayout delimiter="," header="${csvHeaderRow}\n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="200" />
+        </RollingFile>
 
         <!-- Main Application rolling log -->
         <RollingFile name="MainRollingLog" fileName="${logDirectory}/${logFileName}" filePattern="${logDirectory}/${ArchiveLogName}">
@@ -58,6 +71,9 @@
         </Console>
     </Appenders>
     <Loggers>
+        <Logger name="CSVLogger" level="debug" additivity="false">
+            <AppenderRef ref="csvFile" level="debug"/>
+        </Logger>
         <Logger name="ConsoleLogger" level="info" additivity="false">
                 <appender-ref ref="Console-Out" level="info" />
         </Logger>
